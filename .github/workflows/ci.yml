@@ -40,6 +40,7 @@ jobs:
             fi
           else
             echo "No reference screenshot found — skipping comparison"
+            mkdir -p assets
             cp /tmp/screenshot-test/screenshot.png assets/screenshot.png
           fi
 
@@ -74,8 +75,51 @@ jobs:
       - name: Verify universal binary
         run: file .build/Occam.app/Contents/MacOS/Occam
 
+      - name: Import signing certificate
+        env:
+          P12_BASE64: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$P12_BASE64" | base64 --decode > /tmp/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import /tmp/certificate.p12 \
+            -k "$KEYCHAIN_PATH" \
+            -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          rm /tmp/certificate.p12
+
+      - name: Sign app bundle
+        run: make sign
+
+      - name: Notarize and staple
+        env:
+          NOTARIZE_APPLE_ID: ${{ secrets.NOTARIZE_APPLE_ID }}
+          NOTARIZE_PASSWORD: ${{ secrets.NOTARIZE_PASSWORD }}
+          NOTARIZE_TEAM_ID: ${{ secrets.NOTARIZE_TEAM_ID }}
+        run: |
+          ditto -c -k --keepParent .build/Occam.app .build/Occam-notarize.zip
+          xcrun notarytool submit .build/Occam-notarize.zip \
+            --apple-id "$NOTARIZE_APPLE_ID" \
+            --password "$NOTARIZE_PASSWORD" \
+            --team-id "$NOTARIZE_TEAM_ID" \
+            --wait
+          rm -f .build/Occam-notarize.zip
+          xcrun stapler staple .build/Occam.app
+
+      - name: Verify signature
+        run: |
+          codesign --verify --verbose=2 .build/Occam.app
+          spctl --assess --type exec --verbose=2 .build/Occam.app
+
       - name: Create release zip
-        run: make release-universal
+        run: cd .build && zip -r -y Occam-${{ steps.version.outputs.version }}-universal.zip Occam.app
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -86,7 +130,7 @@ jobs:
 
             1. Download `Occam-${{ steps.version.outputs.version }}-universal.zip` below
             2. Unzip and drag `Occam.app` to your Applications folder
-            3. Launch Occam — if macOS blocks it, right-click > Open (one-time only)
+            3. Launch Occam
             4. Press **Cmd+Space** to start searching
 
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details.
