@@ -5,6 +5,7 @@ enum AppDiscovery {
     private static let rootDirectories = [
         URL(fileURLWithPath: "/Applications"),
         URL(fileURLWithPath: "/System/Applications"),
+        URL(fileURLWithPath: "/System/Library/CoreServices/Applications"),
     ]
 
     static func scanApplications() -> [LaunchItem] {
@@ -25,8 +26,9 @@ enum AppDiscovery {
 
         for url in contents {
             if url.pathExtension == "app" {
-                let name = displayName(for: url)
-                items.append(LaunchItem(name: name, url: url, kind: .application))
+                let resolved = url.resolvingSymlinksInPath()
+                let name = displayName(for: resolved)
+                items.append(LaunchItem(name: name, url: resolved, kind: .application))
             } else if isDirectory(url) {
                 // Recurse into regular directories, but not .app bundles
                 scanDirectory(url, into: &items)

@@ -47,8 +47,8 @@ class SearchState: ObservableObject {
             "/System/Applications/Utilities/Terminal.app",
         ]
         allItems = mockPaths.compactMap { path -> LaunchItem? in
-            let url = URL(fileURLWithPath: path)
-            guard FileManager.default.fileExists(atPath: path) else { return nil }
+            let url = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             let name = Bundle(url: url)?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
                 ?? Bundle(url: url)?.object(forInfoDictionaryKey: "CFBundleName") as? String
                 ?? url.deletingPathExtension().lastPathComponent
