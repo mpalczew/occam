@@ -9,7 +9,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKeyRef: EventHotKeyRef?
     private var localMonitor: Any?
     private var clickMonitor: Any?
+    private let autoUpdater = AutoUpdater()
     var screenshotOutputPath: String?
+    var checkUpdateMode = false
 
     private var isScreenshotMode: Bool { screenshotOutputPath != nil }
 
@@ -47,11 +49,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        offerLoginItem()
+        if checkUpdateMode {
+            runCheckUpdateAndExit()
+            return
+        }
+
+        offerOnboarding()
         handleSpotlightConflict()
         registerCarbonHotkey()
         registerLocalMonitor()
         registerClickOutsideMonitor()
+
+        autoUpdater.isPanelHidden = { [weak self] in !(self?.panel.isVisible ?? false) }
+        autoUpdater.startMonitoring()
 
         showPanel()
     }
@@ -119,11 +129,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self = self,
                   let contentView = self.panel.contentView,
                   let bitmapRep = contentView.bitmapImageRepForCachingDisplay(in: contentView.bounds)
-            else { exit(1) }
+            else { _exit(1) }
 
             contentView.cacheDisplay(in: contentView.bounds, to: bitmapRep)
 
-            guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else { exit(1) }
+            guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else { _exit(1) }
 
             let url = URL(fileURLWithPath: path)
             try? FileManager.default.createDirectory(
@@ -131,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 withIntermediateDirectories: true
             )
             try? pngData.write(to: url)
-            exit(0)
+            _exit(0)
         }
     }
 
@@ -304,28 +314,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Login Item
+    // MARK: - Check Update Mode
 
-    private static let loginItemOfferedKey = "occam_login_item_offered"
+    private func runCheckUpdateAndExit() {
+        autoUpdater.checkNow { message in
+            print("Occam: \(message)")
+            _exit(0)
+        }
+        // Keep the run loop alive until the check completes
+        RunLoop.current.run()
+    }
 
-    private func offerLoginItem() {
-        guard !UserDefaults.standard.bool(forKey: Self.loginItemOfferedKey) else { return }
-        UserDefaults.standard.set(true, forKey: Self.loginItemOfferedKey)
+    // MARK: - Onboarding
+
+    private static let onboardingOfferedKey = "occam_onboarding_offered"
+
+    private func offerOnboarding() {
+        guard !UserDefaults.standard.bool(forKey: Self.onboardingOfferedKey) else { return }
+        UserDefaults.standard.set(true, forKey: Self.onboardingOfferedKey)
 
         if #available(macOS 13.0, *) {
             let service = SMAppService.mainApp
-            guard service.status != .enabled else { return }
+
+            let loginCheckbox = NSButton(checkboxWithTitle: "Start Occam at login", target: nil, action: nil)
+            loginCheckbox.state = .on
+
+            let updateCheckbox = NSButton(checkboxWithTitle: "Keep Occam automatically updated", target: nil, action: nil)
+            updateCheckbox.state = .on
+
+            let stack = NSStackView(views: [loginCheckbox, updateCheckbox])
+            stack.orientation = .vertical
+            stack.alignment = .leading
+            stack.spacing = 8
+            stack.setFrameSize(NSSize(width: 300, height: 52))
 
             let alert = NSAlert()
-            alert.messageText = "Start Occam at login?"
-            alert.informativeText = "Occam runs in the background to listen for your hotkey. macOS will ask for App Management permission to allow this."
+            alert.messageText = "Welcome to Occam"
+            alert.informativeText = "Occam runs in the background to listen for your hotkey."
             alert.alertStyle = .informational
-            alert.addButton(withTitle: "Enable")
-            alert.addButton(withTitle: "Not Now")
+            alert.accessoryView = stack
+            alert.addButton(withTitle: "Continue")
 
-            if alert.runModal() == .alertFirstButtonReturn {
+            alert.runModal()
+
+            if loginCheckbox.state == .on {
                 try? service.register()
             }
+            AutoUpdater.isEnabled = updateCheckbox.state == .on
         }
     }
 }

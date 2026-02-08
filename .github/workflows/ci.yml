@@ -51,6 +51,15 @@ jobs:
           name: screenshot
           path: /tmp/screenshot-test/
 
+      - name: Test update checker
+        run: |
+          # Set a fake old version so the checker detects an update
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.0.1" .build/Occam.app/Contents/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 0.0.1" .build/Occam.app/Contents/Info.plist
+          OUTPUT=$(.build/Occam.app/Contents/MacOS/Occam --check-update 2>&1 || true)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -q "Update available" || { echo "Expected 'Update available' in output"; exit 1; }
+
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')

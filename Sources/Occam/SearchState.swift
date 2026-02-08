@@ -14,17 +14,24 @@ class SearchState: ObservableObject {
         filteredItems[safe: selectedIndex]
     }
 
-    private static let builtInActions: [LaunchItem] = [
-        LaunchItem(name: "Quit Occam", url: URL(string: "occam://quit")!, kind: .action { NSApp.terminate(nil) }),
-        LaunchItem(name: "Restart Occam", url: URL(string: "occam://restart")!, kind: .action {
-            let bundlePath = Bundle.main.bundlePath
-            let task = Process()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-            task.arguments = [bundlePath]
-            try? task.run()
-            NSApp.terminate(nil)
-        }),
-    ]
+    private static var builtInActions: [LaunchItem] {
+        let autoUpdateName = AutoUpdater.isEnabled ? "Disable Auto-Update" : "Enable Auto-Update"
+        return [
+            LaunchItem(name: "Quit Occam", url: URL(string: "occam://quit")!, kind: .action { NSApp.terminate(nil) }),
+            LaunchItem(name: "Restart Occam", url: URL(string: "occam://restart")!, kind: .action {
+                let bundlePath = Bundle.main.bundlePath
+                let task = Process()
+                task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+                task.arguments = [bundlePath]
+                try? task.run()
+                NSApp.terminate(nil)
+            }),
+            LaunchItem(name: autoUpdateName, url: URL(string: "occam://toggle-auto-update")!, kind: .action {
+                AutoUpdater.isEnabled = !AutoUpdater.isEnabled
+                NSLog("Occam: Auto-update \(AutoUpdater.isEnabled ? "enabled" : "disabled")")
+            }),
+        ]
+    }
 
     func loadItems() {
         allItems = AppDiscovery.scanApplications() + SystemSettings.allItems + Self.builtInActions

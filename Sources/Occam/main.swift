@@ -8,5 +8,9 @@ if let idx = CommandLine.arguments.firstIndex(of: "--screenshot"),
     delegate.screenshotOutputPath = CommandLine.arguments[idx + 1]
 }
 
+if CommandLine.arguments.contains("--check-update") {
+    delegate.checkUpdateMode = true
+}
+
 app.delegate = delegate
 app.run()
