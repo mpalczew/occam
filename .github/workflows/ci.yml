@@ -138,3 +138,14 @@ jobs:
             .build/Occam-${{ steps.version.outputs.version }}-universal.zip
           draft: false
           prerelease: false
+
+      - name: Update Homebrew cask
+        run: |
+          SHA256=$(shasum -a 256 .build/Occam-${{ steps.version.outputs.version }}-universal.zip | awk '{print $1}')
+          sed -i '' "s/version \".*\"/version \"${{ steps.version.outputs.version }}\"/" Casks/occam.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"$SHA256\"/" Casks/occam.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/occam.rb
+          git commit -m "Update cask to v${{ steps.version.outputs.version }}"
+          git push origin HEAD:master
