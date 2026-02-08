@@ -40,9 +40,6 @@ brew install --cask occam
 2. Unzip and drag **Occam.app** to your Applications folder
 3. Launch Occam
 
-> **Note:** Occam is not notarized. macOS will show a warning on first launch.
-> To open it: **Right-click** Occam.app > **Open** > **Open** in the dialog. You only need to do this once.
-
 </details>
 
 <details>
