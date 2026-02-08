@@ -3,3 +3,8 @@
 .DS_Store
 .vscode/
 Resources/AppIcon.iconset/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.zip

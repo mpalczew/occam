@@ -9,10 +9,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKeyRef: EventHotKeyRef?
     private var localMonitor: Any?
     private var clickMonitor: Any?
+    var screenshotOutputPath: String?
+
+    private var isScreenshotMode: Bool { screenshotOutputPath != nil }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         searchState = SearchState()
-        searchState.loadItems()
+
+        if isScreenshotMode {
+            searchState.loadMockItems()
+        } else {
+            searchState.loadItems()
+        }
 
         let panelRect = NSRect(x: 0, y: 0, width: 680, height: 420)
         panel = SearchPanel(contentRect: panelRect)
@@ -24,6 +32,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         panel.contentView = NSHostingView(rootView: searchView)
         panel.centerOnScreen()
+
+        if isScreenshotMode {
+            // Leave query empty to show all apps with icons
+            panel.centerOnScreen()
+            panel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            captureAndExit(to: screenshotOutputPath!)
+            return
+        }
 
         offerLoginItem()
         handleSpotlightConflict()
@@ -87,6 +104,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             RecentApps.record(item)
             hidePanel()
             NSWorkspace.shared.open(item.url)
+        }
+    }
+
+    // MARK: - Screenshot Capture
+
+    private func captureAndExit(to path: String) {
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+            guard let self = self,
+                  let contentView = self.panel.contentView,
+                  let bitmapRep = contentView.bitmapImageRepForCachingDisplay(in: contentView.bounds)
+            else { exit(1) }
+
+            contentView.cacheDisplay(in: contentView.bounds, to: bitmapRep)
+
+            guard let pngData = bitmapRep.representation(using: .png, properties: [:]) else { exit(1) }
+
+            let url = URL(fileURLWithPath: path)
+            try? FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try? pngData.write(to: url)
+            exit(0)
         }
     }
 

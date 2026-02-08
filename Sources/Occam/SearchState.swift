@@ -31,6 +31,32 @@ class SearchState: ObservableObject {
         updateFilteredResults()
     }
 
+    func loadMockItems() {
+        let mockPaths = [
+            "/Applications/Safari.app",
+            "/System/Applications/Calculator.app",
+            "/System/Applications/Calendar.app",
+            "/System/Applications/FaceTime.app",
+            "/System/Applications/Maps.app",
+            "/System/Applications/Messages.app",
+            "/System/Applications/Music.app",
+            "/System/Applications/Notes.app",
+            "/System/Applications/Photos.app",
+            "/System/Applications/Preview.app",
+            "/System/Applications/TextEdit.app",
+            "/System/Applications/Utilities/Terminal.app",
+        ]
+        allItems = mockPaths.compactMap { path -> LaunchItem? in
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: path) else { return nil }
+            let name = Bundle(url: url)?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+                ?? Bundle(url: url)?.object(forInfoDictionaryKey: "CFBundleName") as? String
+                ?? url.deletingPathExtension().lastPathComponent
+            return LaunchItem(name: name, url: url, kind: .application)
+        }
+        updateFilteredResults()
+    }
+
     func moveSelectionUp() {
         if selectedIndex > 0 { selectedIndex -= 1 }
     }
