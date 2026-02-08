@@ -5,7 +5,7 @@ CONTENTS    := $(APP_BUNDLE)/Contents
 MACOS_DIR   := $(CONTENTS)/MacOS
 VERSION     := $(shell /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Resources/Info.plist)
 
-SIGNING_IDENTITY ?= Developer ID Application: Michael Palczewski (FS3CWH8867)
+SIGNING_IDENTITY ?= Developer ID Application: Michal Palczewski (FS3CWH8867)
 ENTITLEMENTS     := Resources/Occam.entitlements
 
 .PHONY: build build-universal run clean release-universal screenshot sign notarize
