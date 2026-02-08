@@ -38,31 +38,63 @@
 
 ## Releasing a New Version
 
-Run `scripts/release.sh X.Y.Z` (e.g. `scripts/release.sh 1.3.0`). It will:
-1. Update `CHANGELOG.md` with a new version header (you fill in the entries).
-2. Commit and push to master.
-3. Tag `vX.Y.Z` and push the tag.
+### For agents: step-by-step release procedure
+When the user asks to release a new version:
 
-CI handles everything else automatically:
-- Builds a universal arm64+x86_64 binary.
-- Signs with Developer ID Application certificate (hardened runtime).
-- Notarizes with Apple and staples the ticket.
-- Creates a GitHub Release with `Occam-{version}-universal.zip`.
-- Updates the Homebrew tap (`mpalczew/homebrew-occam`) with the new version and SHA256.
+1. Determine the version number. Check `git tag --sort=-v:refname | head -1` for the latest tag and bump accordingly (semver).
+2. Add a new section to `CHANGELOG.md` above the previous version:
+   ```
+   ## [X.Y.Z] - YYYY-MM-DD
+
+   ### Added/Changed/Fixed
+   - Description of changes
+   ```
+3. Commit and push:
+   ```
+   git add CHANGELOG.md
+   git commit -m "Release vX.Y.Z"
+   git push origin master
+   ```
+4. Tag and push the tag:
+   ```
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+5. Watch CI complete: `gh run watch` — all steps must pass including "Update Homebrew tap".
+6. Verify the upgrade works:
+   ```
+   brew update && brew upgrade --cask occam
+   codesign --verify --verbose=2 /Applications/Occam.app
+   spctl --assess --type exec --verbose=2 /Applications/Occam.app
+   ```
+   The `spctl` output must say `source=Notarized Developer ID`.
+
+The human can also use `scripts/release.sh X.Y.Z` which does steps 1-4 interactively.
+
+Do NOT manually update `Resources/Info.plist` version — CI does this automatically from the tag.
+Do NOT manually update `Casks/occam.rb` or `mpalczew/homebrew-occam` — CI does this automatically.
+
+### What CI does on tag push
+1. Builds a universal arm64+x86_64 binary.
+2. Signs with Developer ID Application certificate (hardened runtime).
+3. Notarizes with Apple and staples the ticket.
+4. Verifies with `codesign --verify` and `spctl --assess`.
+5. Creates a GitHub Release with `Occam-{version}-universal.zip`.
+6. Updates the Homebrew tap repo (`mpalczew/homebrew-occam`) with the new version and SHA256.
 
 ### Homebrew Cask
 Users install via `brew tap mpalczew/occam && brew install --cask occam`.
 
-The cask formula lives in [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam) at `Casks/occam.rb`. CI auto-updates it on each release. A copy in this repo at `Casks/occam.rb` is kept for reference but is not canonical.
+The canonical cask formula lives in the separate repo [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam) at `Casks/occam.rb`. CI auto-updates it on each release. The copy in this repo at `Casks/occam.rb` is for reference only — Homebrew reads from `homebrew-occam`.
 
 ### CI Secrets
 The release job requires these GitHub secrets (already configured):
-- `DEVELOPER_ID_CERTIFICATE_P12_BASE64` — signing certificate
-- `DEVELOPER_ID_CERTIFICATE_PASSWORD` — certificate password
-- `NOTARIZE_APPLE_ID` — Apple ID for notarization
+- `DEVELOPER_ID_CERTIFICATE_P12_BASE64` — signing certificate (.p12 base64)
+- `DEVELOPER_ID_CERTIFICATE_PASSWORD` — password for the .p12
+- `NOTARIZE_APPLE_ID` — Apple ID email for notarization
 - `NOTARIZE_PASSWORD` — app-specific password for notarization
-- `NOTARIZE_TEAM_ID` — Apple Developer Team ID
-- `HOMEBREW_TAP_TOKEN` — PAT with write access to `mpalczew/homebrew-occam`
+- `NOTARIZE_TEAM_ID` — Apple Developer Team ID (FS3CWH8867)
+- `HOMEBREW_TAP_TOKEN` — fine-grained PAT with contents:write on `mpalczew/homebrew-occam`
 
 ### Screenshot Tests
 - CI runs `--screenshot` mode which produces a deterministic screenshot using mock system apps.
