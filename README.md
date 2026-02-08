@@ -26,7 +26,15 @@ One shortcut. Instant results. No bloat.
 
 ## Install
 
-### Download (recommended)
+```bash
+brew tap mpalczew/occam
+brew install --cask occam
+```
+
+### Other options
+
+<details>
+<summary>Download from GitHub Releases</summary>
 
 1. Download the latest `Occam-x.x.x-universal.zip` from [Releases](https://github.com/mpalczew/occam/releases/latest)
 2. Unzip and drag **Occam.app** to your Applications folder
@@ -35,14 +43,10 @@ One shortcut. Instant results. No bloat.
 > **Note:** Occam is not notarized. macOS will show a warning on first launch.
 > To open it: **Right-click** Occam.app > **Open** > **Open** in the dialog. You only need to do this once.
 
-### Homebrew
+</details>
 
-```bash
-brew tap mpalczew/occam
-brew install --cask occam
-```
-
-### Build from source
+<details>
+<summary>Build from source</summary>
 
 ```bash
 git clone https://github.com/mpalczew/occam.git
@@ -52,6 +56,8 @@ cp -r .build/Occam.app /Applications/
 ```
 
 Requires Xcode Command Line Tools (`xcode-select --install`).
+
+</details>
 
 ## Usage
 
