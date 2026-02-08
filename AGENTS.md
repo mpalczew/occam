@@ -4,7 +4,7 @@
 - Hybrid AppKit + SwiftUI. NSPanel for window management, SwiftUI via NSHostingView for UI.
 - Zero external dependencies. Pure Swift/AppKit/SwiftUI only.
 - Explicit `main.swift` entry point (not `@main`).
-- One class/protocol/struct per file.
+- One class/protocol/struct per file. No exceptions — extract helpers into separate files.
 
 ## Build
 - SPM with `Package.swift`. Makefile wraps `swift build` and assembles `.app` bundle.
@@ -13,12 +13,18 @@
 
 ## Hotkey
 - Carbon `RegisterEventHotKey` for global hotkey (not `NSEvent.addGlobalMonitorForEvents`).
-- Cmd+Space default. Detect Spotlight conflict on first launch; offer to disable via PlistBuddy + `activateSettings -u`.
+- Cmd+Space default. Detect Spotlight conflict on first launch; offer alternatives.
 
 ## Panel
 - Borderless `NSPanel` with `.nonactivatingPanel`, `isFloatingPanel=true`, `level=.floating`.
 - `hidePanel()` must call `NSApp.hide(nil)` to return focus to previous app.
 - Focus text field by walking view hierarchy to find editable `NSTextField`, not the NSHostingView.
+
+## Search & Ranking
+- FuzzyMatcher.swift scores results with bonuses for consecutive, prefix, and word-start matches.
+- RecentApps.swift boosts recently launched apps. Stored in UserDefaults as JSON.
+- SystemSettings.swift contains a hardcoded list of Settings pane URLs — not discovered dynamically. Add new panes here manually.
+- Three LaunchItem kinds: `.application`, `.systemSetting`, `.action`.
 
 ## App Discovery
 - `FileManager.contentsOfDirectory` on `/Applications` and `/System/Applications`.
@@ -27,7 +33,7 @@
 
 ## Permissions
 - Do NOT prompt for Accessibility. Carbon hotkeys don't need it, and rebuilds invalidate the binary hash.
-- Login item via `SMAppService` — explain App Management permission to user before triggering.
+- Explain App Management permission to user before triggering login item registration.
 - Only ask once (track in UserDefaults).
 
 ## Releasing a New Version
