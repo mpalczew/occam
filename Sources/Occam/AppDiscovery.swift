@@ -20,7 +20,7 @@ enum AppDiscovery {
         guard let contents = try? fm.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: [.skipsPackageDescendants]
         ) else { return }
 
         for url in contents {
