@@ -13,6 +13,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var isScreenshotMode: Bool { screenshotOutputPath != nil }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showPanel()
+        return false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         searchState = SearchState()
 
