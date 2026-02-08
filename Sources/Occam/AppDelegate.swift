@@ -21,6 +21,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Handle --check-update early (no UI needed)
+        if checkUpdateMode {
+            runCheckUpdateAndExit()
+            return
+        }
+
         searchState = SearchState()
 
         if isScreenshotMode {
@@ -46,11 +52,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             panel.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             captureAndExit(to: screenshotOutputPath!)
-            return
-        }
-
-        if checkUpdateMode {
-            runCheckUpdateAndExit()
             return
         }
 
@@ -319,6 +320,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func runCheckUpdateAndExit() {
         autoUpdater.checkNow { message in
             print("Occam: \(message)")
+            fflush(stdout)
             _exit(0)
         }
         // Keep the run loop alive until the check completes

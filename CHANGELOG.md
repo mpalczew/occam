@@ -5,6 +5,17 @@ All notable changes to Occam will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-08
+
+### Added
+- Automatic self-updating: checks GitHub Releases every 24h, downloads, verifies code signature, and silently updates when the search panel is hidden
+- Combined onboarding dialog for login item and auto-update preferences
+- "Disable Auto-Update" / "Enable Auto-Update" built-in action
+- `--check-update` CLI flag for CI testing
+
+### Fixed
+- Zombie screenshot processes not exiting cleanly
+
 ## [1.3.0] - 2026-02-08
 
 ### Added
