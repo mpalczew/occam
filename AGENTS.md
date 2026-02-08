@@ -38,26 +38,31 @@
 
 ## Releasing a New Version
 
-### Steps
-1. Update `CHANGELOG.md` — add a new `## [X.Y.Z] - YYYY-MM-DD` section above the previous version with `### Added`, `### Changed`, `### Fixed`, etc. subsections as appropriate. Follow the [Keep a Changelog](https://keepachangelog.com/) format already used in the file.
-2. Update `CFBundleVersion` and `CFBundleShortVersionString` in `Resources/Info.plist` to the new version (e.g. `1.1.0`). Use semver.
-3. Commit and push to master.
-4. Tag and push: `git tag v1.1.0 && git push origin v1.1.0`
-5. CI (`.github/workflows/ci.yml`) automatically builds a universal arm64+x86_64 binary and creates a GitHub Release with `Occam-{version}-universal.zip` attached.
-6. Update the Homebrew cask (see below).
+Run `scripts/release.sh X.Y.Z` (e.g. `scripts/release.sh 1.3.0`). It will:
+1. Update `CHANGELOG.md` with a new version header (you fill in the entries).
+2. Commit and push to master.
+3. Tag `vX.Y.Z` and push the tag.
+
+CI handles everything else automatically:
+- Builds a universal arm64+x86_64 binary.
+- Signs with Developer ID Application certificate (hardened runtime).
+- Notarizes with Apple and staples the ticket.
+- Creates a GitHub Release with `Occam-{version}-universal.zip`.
+- Updates the Homebrew tap (`mpalczew/homebrew-occam`) with the new version and SHA256.
 
 ### Homebrew Cask
 Users install via `brew tap mpalczew/occam && brew install --cask occam`.
 
-The cask formula lives in a **separate repo**: [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam) at `Casks/occam.rb`. A copy is also kept in this repo at `Casks/occam.rb` for reference.
+The cask formula lives in [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam) at `Casks/occam.rb`. CI auto-updates it on each release. A copy in this repo at `Casks/occam.rb` is kept for reference but is not canonical.
 
-After a new release is published, update the cask:
-1. Download the new release zip and get its SHA256: `shasum -a 256 Occam-X.Y.Z-universal.zip`
-2. Edit `Casks/occam.rb` in **both** repos — update `version` and `sha256`.
-3. Commit and push to `mpalczew/homebrew-occam`.
-4. Commit and push to this repo.
-
-The URL pattern is `https://github.com/mpalczew/occam/releases/download/v{version}/Occam-{version}-universal.zip` — the version in `Info.plist`, the git tag, and the cask `version` must all match.
+### CI Secrets
+The release job requires these GitHub secrets (already configured):
+- `DEVELOPER_ID_CERTIFICATE_P12_BASE64` — signing certificate
+- `DEVELOPER_ID_CERTIFICATE_PASSWORD` — certificate password
+- `NOTARIZE_APPLE_ID` — Apple ID for notarization
+- `NOTARIZE_PASSWORD` — app-specific password for notarization
+- `NOTARIZE_TEAM_ID` — Apple Developer Team ID
+- `HOMEBREW_TAP_TOKEN` — PAT with write access to `mpalczew/homebrew-occam`
 
 ### Screenshot Tests
 - CI runs `--screenshot` mode which produces a deterministic screenshot using mock system apps.
