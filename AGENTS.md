@@ -38,66 +38,23 @@
 
 ## Releasing a New Version
 
-### For agents: step-by-step release procedure
-When the user asks to release a new version:
+1. Update `CHANGELOG.md` with a new `## [X.Y.Z] - YYYY-MM-DD` section.
+2. Commit: `git commit -am "Release vX.Y.Z"`
+3. Tag and push: `git tag vX.Y.Z && git push origin master vX.Y.Z`
+4. Wait for CI: `gh run watch`
+5. Upgrade locally: `brew update && brew upgrade --cask occam`
 
-1. Determine the version number. Check `git tag --sort=-v:refname | head -1` for the latest tag and bump accordingly (semver).
-2. Add a new section to `CHANGELOG.md` above the previous version:
-   ```
-   ## [X.Y.Z] - YYYY-MM-DD
+Or use `scripts/release.sh X.Y.Z` which does steps 1-3 interactively.
 
-   ### Added/Changed/Fixed
-   - Description of changes
-   ```
-3. Commit and push:
-   ```
-   git add CHANGELOG.md
-   git commit -m "Release vX.Y.Z"
-   git push origin master
-   ```
-4. Tag and push the tag:
-   ```
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
-   ```
-5. Watch CI complete: `gh run watch` — all steps must pass including "Update Homebrew tap".
-6. Verify the upgrade works:
-   ```
-   brew update && brew upgrade --cask occam
-   codesign --verify --verbose=2 /Applications/Occam.app
-   spctl --assess --type exec --verbose=2 /Applications/Occam.app
-   ```
-   The `spctl` output must say `source=Notarized Developer ID`.
+CI automatically builds, signs, notarizes, creates the GitHub Release, and updates the Homebrew tap. Do NOT manually update `Info.plist` version, `Casks/occam.rb`, or `mpalczew/homebrew-occam`.
 
-The human can also use `scripts/release.sh X.Y.Z` which does steps 1-4 interactively.
+### Homebrew
+- Install: `brew tap mpalczew/occam && brew install --cask occam`
+- Canonical cask lives in [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam). The copy in this repo is for reference only.
 
-Do NOT manually update `Resources/Info.plist` version — CI does this automatically from the tag.
-Do NOT manually update `Casks/occam.rb` or `mpalczew/homebrew-occam` — CI does this automatically.
-
-### What CI does on tag push
-1. Builds a universal arm64+x86_64 binary.
-2. Signs with Developer ID Application certificate (hardened runtime).
-3. Notarizes with Apple and staples the ticket.
-4. Verifies with `codesign --verify` and `spctl --assess`.
-5. Creates a GitHub Release with `Occam-{version}-universal.zip`.
-6. Updates the Homebrew tap repo (`mpalczew/homebrew-occam`) with the new version and SHA256.
-
-### Homebrew Cask
-Users install via `brew tap mpalczew/occam && brew install --cask occam`.
-
-The canonical cask formula lives in the separate repo [`mpalczew/homebrew-occam`](https://github.com/mpalczew/homebrew-occam) at `Casks/occam.rb`. CI auto-updates it on each release. The copy in this repo at `Casks/occam.rb` is for reference only — Homebrew reads from `homebrew-occam`.
-
-### CI Secrets
-The release job requires these GitHub secrets (already configured):
-- `DEVELOPER_ID_CERTIFICATE_P12_BASE64` — signing certificate (.p12 base64)
-- `DEVELOPER_ID_CERTIFICATE_PASSWORD` — password for the .p12
-- `NOTARIZE_APPLE_ID` — Apple ID email for notarization
-- `NOTARIZE_PASSWORD` — app-specific password for notarization
-- `NOTARIZE_TEAM_ID` — Apple Developer Team ID (FS3CWH8867)
-- `HOMEBREW_TAP_TOKEN` — fine-grained PAT with contents:write on `mpalczew/homebrew-occam`
+### CI Secrets (already configured)
+`DEVELOPER_ID_CERTIFICATE_P12_BASE64`, `DEVELOPER_ID_CERTIFICATE_PASSWORD`, `NOTARIZE_APPLE_ID`, `NOTARIZE_PASSWORD`, `NOTARIZE_TEAM_ID`, `HOMEBREW_TAP_TOKEN`
 
 ### Screenshot Tests
-- CI runs `--screenshot` mode which produces a deterministic screenshot using mock system apps.
-- Compared against the checked-in `assets/screenshot.png` via ImageMagick RMSE.
-- If the UI changes, CI fails. Run `make screenshot` locally and commit the updated `assets/screenshot.png`.
-- The checked-in screenshot is also the README image — always in sync with the UI.
+- CI compares `--screenshot` output against `assets/screenshot.png` via ImageMagick RMSE.
+- If UI changes, run `make screenshot` locally and commit the updated image.
