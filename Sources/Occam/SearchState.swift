@@ -30,6 +30,19 @@ class SearchState: ObservableObject {
                 AutoUpdater.isEnabled = !AutoUpdater.isEnabled
                 NSLog("Occam: Auto-update \(AutoUpdater.isEnabled ? "enabled" : "disabled")")
             }),
+            LaunchItem(name: "About Occam", url: URL(string: "occam://about")!, kind: .action {
+                let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+                let alert = NSAlert()
+                alert.messageText = "Occam v\(version)"
+                alert.informativeText = "A minimalist app launcher for macOS."
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "OK")
+                alert.addButton(withTitle: "Copy Version")
+                if alert.runModal() == .alertSecondButtonReturn {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(version, forType: .string)
+                }
+            }),
         ]
     }
 
