@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var localMonitor: Any?
     private var clickMonitor: Any?
     private let autoUpdater = AutoUpdater()
+    private var isActionRunning = false
     var screenshotOutputPath: String?
     var checkUpdateMode = false
 
@@ -102,6 +103,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func togglePanel() {
+        guard !isActionRunning else { return }
         if panel.isVisible {
             hidePanel()
         } else {
@@ -115,7 +117,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         switch item.kind {
         case .action(let action):
             hidePanel()
+            isActionRunning = true
             action()
+            isActionRunning = false
         default:
             RecentApps.record(item)
             hidePanel()
@@ -204,6 +208,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.terminate(nil)
                 return nil
             }
+
+            // All other shortcuts require the panel to be visible
+            guard self.panel.isVisible else { return event }
 
             // Cmd+1 through Cmd+9 to launch by position
             if event.modifierFlags.contains(.command) {
