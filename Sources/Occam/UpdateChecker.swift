@@ -22,6 +22,9 @@ enum UpdateChecker {
     ) {
         var request = URLRequest(url: latestReleaseURL)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        if let token = ProcessInfo.processInfo.environment["GITHUB_TOKEN"] {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         request.timeoutInterval = 15
 
         URLSession.shared.dataTask(with: request) { data, response, error in

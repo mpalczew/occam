@@ -52,6 +52,8 @@ jobs:
           path: /tmp/screenshot-test/
 
       - name: Test update checker
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Set a fake old version so the checker detects an update
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.0.1" .build/Occam.app/Contents/Info.plist

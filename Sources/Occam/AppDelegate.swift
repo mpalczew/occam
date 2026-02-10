@@ -65,7 +65,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         autoUpdater.isPanelHidden = { [weak self] in !(self?.panel.isVisible ?? false) }
         autoUpdater.startMonitoring()
 
-        showPanel()
+        if !CommandLine.arguments.contains("--after-update") {
+            showPanel()
+        }
     }
 
     // MARK: - Panel Management
@@ -203,8 +205,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
 
+            guard let key = KeyCode(rawValue: event.keyCode) else { return event }
+
             // Cmd+Q to quit
-            if event.keyCode == 12 && event.modifierFlags.contains(.command) {
+            if key == .q && event.modifierFlags.contains(.command) {
                 NSApp.terminate(nil)
                 return nil
             }
@@ -213,30 +217,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard self.panel.isVisible else { return event }
 
             // Cmd+1 through Cmd+9 to launch by position
-            if event.modifierFlags.contains(.command) {
-                let digit = cmdDigit(for: event.keyCode)
-                if let digit = digit, digit >= 1 && digit <= 9 {
-                    let index = digit - 1
-                    if let item = self.searchState.filteredItems[safe: index] {
-                        self.launch(item)
-                    }
-                    return nil
+            if event.modifierFlags.contains(.command), let digit = key.digit {
+                let index = digit - 1
+                if let item = self.searchState.filteredItems[safe: index] {
+                    self.launch(item)
                 }
+                return nil
             }
 
-            switch event.keyCode {
-            case 53: // Escape
+            switch key {
+            case .escape:
                 self.hidePanel()
                 return nil
-            case 36: // Enter/Return
+            case .returnKey:
                 if let item = self.searchState.selectedItem {
                     self.launch(item)
                 }
                 return nil
-            case 125: // Down arrow
+            case .downArrow:
                 self.searchState.moveSelectionDown()
                 return nil
-            case 126: // Up arrow
+            case .upArrow:
                 self.searchState.moveSelectionUp()
                 return nil
             default:
@@ -374,18 +375,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// Map key codes to digit values for Cmd+1 through Cmd+9
-private func cmdDigit(for keyCode: UInt16) -> Int? {
-    switch keyCode {
-    case 18: return 1  // 1
-    case 19: return 2  // 2
-    case 20: return 3  // 3
-    case 21: return 4  // 4
-    case 23: return 5  // 5
-    case 22: return 6  // 6
-    case 26: return 7  // 7
-    case 28: return 8  // 8
-    case 25: return 9  // 9
-    default: return nil
-    }
-}

@@ -45,9 +45,9 @@ class AutoUpdater {
             NSLog("Occam: Homebrew installation detected")
         }
 
-        // Initial check after a short delay to avoid slowing launch
+        // Always check on launch (after short delay to avoid slowing startup)
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-            self?.checkIfDue()
+            self?.performCheck()
         }
 
         // Hourly timer to check if 24h have elapsed
@@ -164,7 +164,7 @@ class AutoUpdater {
         let bundlePath = Bundle.main.bundlePath
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = [bundlePath]
+        task.arguments = [bundlePath, "--args", "--after-update"]
         try? task.run()
         NSApp.terminate(nil)
     }
