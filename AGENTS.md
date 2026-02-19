@@ -17,8 +17,9 @@
 - Do NOT prompt for Accessibility permission. Carbon hotkeys don't need it, and rebuilds invalidate the binary hash.
 - Do NOT manually update `Info.plist` version, `Casks/occam.rb`, or `mpalczew/homebrew-occam` — CI handles these.
 
-## Build
-- `make build` compiles + assembles. `make run` builds + launches. `make clean` removes artifacts.
+## Build & Run
+- `make build` compiles + assembles the `.app` bundle. `make clean` removes artifacts.
+- `make run` builds + launches the app. Do NOT use `swift run` — this is a macOS GUI app that requires the `.app` bundle.
 
 ## Releasing
 1. Update `CHANGELOG.md` → commit → `git tag vX.Y.Z && git push origin master vX.Y.Z`
@@ -26,3 +27,8 @@
 3. Verify: `gh run watch`, then `brew update && brew upgrade --cask occam`
 4. Or use `scripts/release.sh X.Y.Z` interactively.
 - Screenshot tests: if UI changes, run `make screenshot` and commit the updated `assets/screenshot.png`.
+
+## Procedure
+- test locally
+- release a new version once verified
+- let autoupgrading work

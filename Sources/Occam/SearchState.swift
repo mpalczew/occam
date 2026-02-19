@@ -101,7 +101,8 @@ class SearchState: ObservableObject {
                 }
             }
         } else {
-            filteredItems = FuzzyMatcher.filter(items: allItems, query: query)
+            let ranks = RecentApps.recencyRanks()
+            filteredItems = FuzzyMatcher.filter(items: allItems, query: query, recencyRanks: ranks)
         }
         selectedIndex = 0
     }

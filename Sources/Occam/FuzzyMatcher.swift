@@ -1,7 +1,7 @@
 import Foundation
 
 enum FuzzyMatcher {
-    static func filter(items: [LaunchItem], query: String) -> [LaunchItem] {
+    static func filter(items: [LaunchItem], query: String, recencyRanks: [String: Int] = [:]) -> [LaunchItem] {
         let lowerQuery = query.lowercased()
         var scored: [(item: LaunchItem, score: Int)] = []
 
@@ -12,7 +12,16 @@ enum FuzzyMatcher {
             }
         }
 
-        scored.sort { $0.score > $1.score }
+        scored.sort(by: { lhs,rhs in 
+            if (lhs.score > rhs.score) { return true }
+            else if (lhs.score < rhs.score) { return false }
+            else {
+                let lhsRecencyRank = recencyRanks[lhs.item.url.absoluteString] ?? Int.max
+                let rhsRecencyRank = recencyRanks[rhs.item.url.absoluteString] ?? Int.max
+                return lhsRecencyRank < rhsRecencyRank
+            }
+        })
+
         return scored.map(\.item)
     }
 
