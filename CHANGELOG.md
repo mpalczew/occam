@@ -5,6 +5,12 @@ All notable changes to Occam will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2026-03-12
+
+### Fixed
+- Spotlight shortcut disable failing silently on machines where the hotkey entry didn't exist
+- Spotlight conflict dialog showing on every launch instead of once per version
+
 ## [1.4.5] - 2026-02-19
 
 ### Fixed
