@@ -257,10 +257,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Spotlight Conflict Resolution
 
+    private static let spotlightDialogVersionKey = "occam_spotlight_dialog_version"
+
     private func handleSpotlightConflict() {
         let hotkey = HotkeyConfig.current
         guard hotkey == .cmdSpace else { return }
         guard isSpotlightUsingCmdSpace() else { return }
+
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        if UserDefaults.standard.string(forKey: Self.spotlightDialogVersionKey) == currentVersion {
+            return
+        }
 
         let alert = NSAlert()
         alert.messageText = "Cmd+Space is assigned to Spotlight"
@@ -283,6 +290,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             break
         }
+
+        UserDefaults.standard.set(currentVersion, forKey: Self.spotlightDialogVersionKey)
     }
 
     private func isSpotlightUsingCmdSpace() -> Bool {
@@ -296,13 +305,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func disableSpotlightShortcut() {
-        let plistPath = NSHomeDirectory() + "/Library/Preferences/com.apple.symbolichotkeys.plist"
-
-        let buddy = Process()
-        buddy.executableURL = URL(fileURLWithPath: "/usr/libexec/PlistBuddy")
-        buddy.arguments = ["-c", "Set :AppleSymbolicHotKeys:64:enabled false", plistPath]
-        try? buddy.run()
-        buddy.waitUntilExit()
+        let defaults = Process()
+        defaults.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        defaults.arguments = [
+            "write", "com.apple.symbolichotkeys",
+            "AppleSymbolicHotKeys", "-dict-add", "64",
+            "<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>32</integer><integer>49</integer><integer>1048576</integer></array><key>type</key><string>standard</string></dict></dict>"
+        ]
+        try? defaults.run()
+        defaults.waitUntilExit()
 
         let activate = Process()
         activate.executableURL = URL(fileURLWithPath: "/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings")
