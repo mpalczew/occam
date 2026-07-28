@@ -8,7 +8,6 @@ One shortcut. Instant results. No bloat.
 
 ![Occam](assets/screenshot.png)
 
-[![Build](https://github.com/mpalczew/occam/actions/workflows/ci.yml/badge.svg)](https://github.com/mpalczew/occam/actions/workflows/ci.yml)
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue)](#requirements)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/mpalczew/occam)](https://github.com/mpalczew/occam/releases/latest)

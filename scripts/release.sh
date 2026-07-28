@@ -54,5 +54,5 @@ git push origin master
 git push origin "v$VERSION"
 
 echo ""
-echo "Pushed v$VERSION. CI will build, sign, notarize, release, and update Homebrew."
-echo "Watch: gh run watch"
+echo "Pushed v$VERSION."
+echo "No GitHub Actions release workflow is configured."
