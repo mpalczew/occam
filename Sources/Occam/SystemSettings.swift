@@ -1,39 +1,51 @@
 import Foundation
 
 enum SystemSettings {
-    static let allItems: [LaunchItem] = [
-        item("Wi-Fi", "x-apple.systempreferences:com.apple.wifi-settings-extension"),
-        item("Bluetooth", "x-apple.systempreferences:com.apple.BluetoothSettings"),
-        item("Network", "x-apple.systempreferences:com.apple.Network-Settings.extension"),
-        item("Notifications", "x-apple.systempreferences:com.apple.Notifications-Settings.extension"),
-        item("Sound", "x-apple.systempreferences:com.apple.Sound-Settings.extension"),
-        item("Display", "x-apple.systempreferences:com.apple.Displays-Settings.extension"),
-        item("Wallpaper", "x-apple.systempreferences:com.apple.Wallpaper-Settings.extension"),
-        item("Battery", "x-apple.systempreferences:com.apple.Battery-Settings.extension"),
-        item("Keyboard", "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"),
-        item("Trackpad", "x-apple.systempreferences:com.apple.Trackpad-Settings.extension"),
-        item("Mouse", "x-apple.systempreferences:com.apple.Mouse-Settings.extension"),
-        item("Printers & Scanners", "x-apple.systempreferences:com.apple.Print-Scan-Settings.extension"),
-        item("Privacy & Security", "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"),
-        item("General", "x-apple.systempreferences:com.apple.General-Settings.extension"),
-        item("Appearance", "x-apple.systempreferences:com.apple.Appearance-Settings.extension"),
-        item("Accessibility", "x-apple.systempreferences:com.apple.Accessibility-Settings.extension"),
-        item("Desktop & Dock", "x-apple.systempreferences:com.apple.Desktop-Settings.extension"),
-        item("Lock Screen", "x-apple.systempreferences:com.apple.Lock-Screen-Settings.extension"),
-        item("Users & Groups", "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"),
-        item("Passwords", "x-apple.systempreferences:com.apple.Passwords-Settings.extension"),
-        item("Apple ID", "x-apple.systempreferences:com.apple.systempreferences.AppleIDSettings"),
-        item("Focus", "x-apple.systempreferences:com.apple.Focus-Settings.extension"),
-        item("Screen Time", "x-apple.systempreferences:com.apple.Screen-Time-Settings.extension"),
-        item("Storage", "x-apple.systempreferences:com.apple.settings.Storage"),
-        item("Sharing", "x-apple.systempreferences:com.apple.Sharing-Settings.extension"),
-    ]
+    static let extensionsDirectory = URL(fileURLWithPath: "/System/Library/ExtensionKit/Extensions")
 
-    private static func item(_ name: String, _ urlString: String) -> LaunchItem {
-        LaunchItem(
-            name: "Settings: \(name)",
-            url: URL(string: urlString)!,
-            kind: .systemSetting
+    static let allItems: [LaunchItem] = {
+        let discovered = discover()
+        return discovered.isEmpty ? SystemSettingsFallback.items : discovered
+    }()
+
+    static func discover() -> [LaunchItem] {
+        let fm = FileManager.default
+        guard let appexes = try? fm.contentsOfDirectory(at: extensionsDirectory, includingPropertiesForKeys: nil) else {
+            return []
+        }
+        var subPages: [LaunchItem] = []
+        var panes: [LaunchItem] = []
+        for url in appexes where url.pathExtension == "appex" {
+            guard let bundle = Bundle(url: url),
+                  let info = bundle.infoDictionary,
+                  SettingsSearchTermsParser.isSettingsPane(info: info),
+                  let bundleId = bundle.bundleIdentifier else { continue }
+            for terms in searchTerms(in: bundle) {
+                subPages += SettingsSearchTermsParser.items(bundleId: bundleId, searchTerms: terms)
+            }
+            if let pane = paneItem(bundle: bundle, info: info, bundleId: bundleId) { panes.append(pane) }
+        }
+        let titles = Set(subPages.map { $0.name.lowercased() })
+        let uniquePanes = panes.filter { !titles.contains($0.name.lowercased()) }
+        return SettingsSearchTermsParser.deduped(subPages + uniquePanes)
+    }
+
+    private static func searchTerms(in bundle: Bundle) -> [[String: Any]] {
+        (bundle.urls(forResourcesWithExtension: "searchTerms", subdirectory: nil) ?? []).compactMap { url in
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any]
+        }
+    }
+
+    private static func paneItem(bundle: Bundle, info: [String: Any], bundleId: String) -> LaunchItem? {
+        let name = SettingsSearchTermsParser.paneName(
+            info: info,
+            localize: { key in
+                let value = bundle.localizedString(forKey: key, value: nil, table: "InfoPlist")
+                return value == key ? nil : value
+            },
+            localizedInfo: bundle.localizedInfoDictionary
         )
+        return name.flatMap { SettingsSearchTermsParser.paneItem(bundleId: bundleId, name: $0) }
     }
 }

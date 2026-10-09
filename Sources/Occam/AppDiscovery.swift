@@ -2,17 +2,36 @@ import Foundation
 import AppKit
 
 enum AppDiscovery {
-    private static let rootDirectories = [
+    static let foldersConfigPath = "~/.config/occam/folders"
+
+    private static let builtInRoots = [
         URL(fileURLWithPath: "/Applications"),
         URL(fileURLWithPath: "/System/Applications"),
         URL(fileURLWithPath: "/System/Library/CoreServices/Applications"),
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications"),
     ]
 
+    static func customFolders(from text: String) -> [URL] {
+        text.split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+            .map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+            .filter { isDirectory($0) }
+    }
+
+    private static func configuredFolders() -> [URL] {
+        let path = (foldersConfigPath as NSString).expandingTildeInPath
+        guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { return [] }
+        return customFolders(from: text)
+    }
+
     static func scanApplications() -> [LaunchItem] {
-        var items: [LaunchItem] = []
-        for dir in rootDirectories {
-            scanDirectory(dir, into: &items)
+        var found: [LaunchItem] = []
+        for dir in builtInRoots + configuredFolders() {
+            scanDirectory(dir, into: &found)
         }
+        var seen = Set<String>()
+        let items = found.filter { seen.insert($0.url.path).inserted }
         return items.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
