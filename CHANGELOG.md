@@ -5,6 +5,13 @@ All notable changes to Occam will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-09
+
+### Added
+- Every System Settings page is searchable (~640 pages, read from macOS at launch) and opens directly, e.g. "icloud", "hide my email", "low power"
+- Custom app folders: list extra folders one per line in `~/.config/occam/folders`
+- `~/Applications` is scanned by default
+
 ## [1.4.6] - 2026-03-12
 
 ### Fixed
