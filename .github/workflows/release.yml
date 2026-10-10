@@ -58,17 +58,19 @@ jobs:
 
       - name: Notarize and staple
         env:
-          NOTARIZE_APPLE_ID: ${{ secrets.NOTARIZE_APPLE_ID }}
-          NOTARIZE_PASSWORD: ${{ secrets.NOTARIZE_PASSWORD }}
-          NOTARIZE_TEAM_ID: ${{ secrets.NOTARIZE_TEAM_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          ASC_KEY_PATH=$RUNNER_TEMP/AuthKey.p8
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$ASC_KEY_PATH"
           ditto -c -k --keepParent .build/Occam.app .build/Occam-notarize.zip
           xcrun notarytool submit .build/Occam-notarize.zip \
-            --apple-id "$NOTARIZE_APPLE_ID" \
-            --password "$NOTARIZE_PASSWORD" \
-            --team-id "$NOTARIZE_TEAM_ID" \
+            --key "$ASC_KEY_PATH" \
+            --key-id "$ASC_KEY_ID" \
+            --issuer "$ASC_ISSUER_ID" \
             --wait
-          rm -f .build/Occam-notarize.zip
+          rm -f .build/Occam-notarize.zip "$ASC_KEY_PATH"
           xcrun stapler staple .build/Occam.app
 
       - name: Verify signature
