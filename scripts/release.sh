@@ -55,4 +55,4 @@ git push origin "v$VERSION"
 
 echo ""
 echo "Pushed v$VERSION."
-echo "No GitHub Actions release workflow is configured."
+echo "Build, sign, notarize, publish (macOS runner): gh workflow run release.yml --ref v$VERSION"

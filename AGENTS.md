@@ -20,6 +20,9 @@
 - `make build` compiles + assembles the `.app` bundle. `make clean` removes artifacts.
 - `make run` builds + launches the app. Do NOT use `swift run` — this is a macOS GUI app that requires the `.app` bundle.
 
+## Releasing
+- `scripts/release.sh X.Y.Z` (changelog, tag, push), then `gh workflow run release.yml --ref vX.Y.Z` (manual; macOS runner — ask first). It signs, notarizes, publishes the release, and updates the Homebrew tap.
+
 - Screenshot tests: if UI changes, run `make screenshot` and commit the updated `assets/screenshot.png`.
 
 ## Procedure
