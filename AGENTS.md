@@ -22,6 +22,7 @@
 
 ## Releasing
 - `scripts/release.sh X.Y.Z` (changelog, tag, push), then `gh workflow run release.yml --ref vX.Y.Z` (manual; macOS runner — ask first). It signs, notarizes, publishes the release, and updates the Homebrew tap.
+- Release secrets and where each comes from: `docs/release-secrets.md`.
 
 - Screenshot tests: if UI changes, run `make screenshot` and commit the updated `assets/screenshot.png`.
 
