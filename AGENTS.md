@@ -17,6 +17,7 @@
 - Do NOT prompt for Accessibility permission. Carbon hotkeys don't need it, and rebuilds invalidate the binary hash.
 
 ## Build & Run
+- Run `bin/check` before finishing. Gates: build.
 - `make build` compiles + assembles the `.app` bundle. `make clean` removes artifacts.
 - `make run` builds + launches the app. Do NOT use `swift run` — this is a macOS GUI app that requires the `.app` bundle.
 

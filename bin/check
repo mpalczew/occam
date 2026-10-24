@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# bin/check [gate|all]: silent on pass, prints only failing step output.
+set -u
+cd "$(dirname "$0")/.."
+GATES="build"
+
+gate_paths() { case $1 in build) echo "Sources Package.swift Package.resolved Resources";; esac; }
+step_build_swift() { swift build; }
+
+run_step() {
+  local out
+  if out=$("$2" 2>&1); then echo "✓ $1: $3"; else echo "✗ $1: $3" >&2; printf '%s\n' "$out" | awk 'length < 500' >&2; exit 1; fi
+}
+run_gate() { case $1 in build) run_step build step_build_swift "swift build";; esac; }
+
+sel=${1:-}
+if [ "$sel" = all ]; then todo=$GATES
+elif [ -n "$sel" ]; then
+  case " $GATES " in *" $sel "*) todo=$sel;; *) echo "unknown gate: $sel (gates: $GATES)" >&2; exit 2;; esac
+else
+  base=$(git merge-base HEAD main 2>/dev/null || echo HEAD)
+  changed=$( { git diff --name-only "$base"; git ls-files --others --exclude-standard; } 2>/dev/null | sort -u)
+  todo=
+  for g in $GATES; do
+    for p in $(gate_paths "$g"); do
+      if printf '%s\n' "$changed" | rg -q "^${p}(/|$)"; then todo="$todo $g"; break; fi
+    done
+  done
+fi
+for g in $todo; do run_gate "$g"; done
+exit 0
