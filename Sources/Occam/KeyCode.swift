@@ -1,5 +1,3 @@
-/// Carbon virtual key codes used by the local key monitor.
-/// Raw values from Events.h / HIToolbox.
 enum KeyCode: UInt16 {
     case escape    = 53
     case returnKey = 36
@@ -16,7 +14,6 @@ enum KeyCode: UInt16 {
     case digit8    = 28
     case digit9    = 25
 
-    /// Returns the digit (1-9) for Cmd+N shortcuts, or nil if not a digit key.
     var digit: Int? {
         switch self {
         case .digit1: return 1

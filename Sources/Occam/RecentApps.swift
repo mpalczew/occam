@@ -11,17 +11,14 @@ enum RecentApps {
 
     static func record(_ item: LaunchItem) {
         var entries = load()
-        // Remove existing entry for this URL so we can re-add at the top
         entries.removeAll { $0.url == item.url.absoluteString }
         entries.insert(Entry(url: item.url.absoluteString, timestamp: Date()), at: 0)
-        // Cap the list
         if entries.count > maxEntries {
             entries = Array(entries.prefix(maxEntries))
         }
         save(entries)
     }
 
-    /// Returns a dictionary mapping URL string -> rank (0 = most recent)
     static func recencyRanks() -> [String: Int] {
         let entries = load()
         var ranks: [String: Int] = [:]

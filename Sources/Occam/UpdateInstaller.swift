@@ -11,7 +11,6 @@ enum UpdateInstaller {
         case replaceFailed(Error)
     }
 
-    /// The team ID from the running app's code signature.
     static let expectedTeamID: String = {
         guard let code = staticCode(for: Bundle.main.bundleURL),
               let info = signingInfo(for: code),
@@ -69,14 +68,12 @@ enum UpdateInstaller {
                     return
                 }
 
-                // Verify code signature and team ID
                 if let error = verifySignature(of: newAppURL) {
                     cleanup(tempDir)
                     completion(.failure(error))
                     return
                 }
 
-                // Atomic replacement
                 _ = try fm.replaceItemAt(
                     Bundle.main.bundleURL,
                     withItemAt: newAppURL
@@ -91,9 +88,6 @@ enum UpdateInstaller {
         }.resume()
     }
 
-    // MARK: - Signature Verification
-
-    /// Returns nil on success, or an InstallError on failure.
     private static func verifySignature(of appURL: URL) -> InstallError? {
         guard let code = staticCode(for: appURL) else {
             return .signatureInvalid("Could not create static code reference")
@@ -119,8 +113,6 @@ enum UpdateInstaller {
 
         return nil
     }
-
-    // MARK: - Helpers
 
     private static func staticCode(for url: URL) -> SecStaticCode? {
         var code: SecStaticCode?

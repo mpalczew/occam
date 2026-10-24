@@ -8,7 +8,6 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search field
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
@@ -27,7 +26,6 @@ struct SearchView: View {
 
             Divider()
 
-            // Results list
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
@@ -53,8 +51,6 @@ struct SearchView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
-
-// MARK: - Result Row
 
 struct ResultRow: View {
     let item: LaunchItem
@@ -99,8 +95,6 @@ struct ResultRow: View {
     }
 }
 
-// MARK: - Key Cap
-
 struct KeyCap: View {
     let label: String
 
@@ -121,8 +115,6 @@ struct KeyCap: View {
     }
 }
 
-// MARK: - Visual Effect
-
 struct VisualEffectBlur: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
@@ -134,8 +126,6 @@ struct VisualEffectBlur: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
-
-// MARK: - Safe Collection Subscript
 
 extension Collection {
     subscript(safe index: Index) -> Element? {

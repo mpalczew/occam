@@ -26,8 +26,6 @@ enum FuzzyMatcher {
         return scored.map(\.item)
     }
 
-    /// Score for a match against an item's search keywords (e.g. "hide my email" → Settings: iCloud).
-    /// Must stay below name matches so "Safari" the app beats a settings page that lists "Safari" as a keyword.
     static func keywordScore(keywords: [String], query: String) -> Int {
         guard query.count >= minKeywordQueryLength else { return 0 }
         var best = 0
@@ -40,7 +38,6 @@ enum FuzzyMatcher {
     }
 
     static let minKeywordQueryLength = 3
-    // Below the 16 a name prefix match earns, so apps named like the query still win.
     static let exactKeywordScore = 12
     static let prefixKeywordScore = 8
 
@@ -60,7 +57,6 @@ enum FuzzyMatcher {
             if nameChars[nameIndex] == queryChars[queryIndex] {
                 total += 1
 
-                // Consecutive character bonus
                 if nameIndex == prevMatchIndex + 1 {
                     consecutive += 1
                     total += consecutive * 3
@@ -68,12 +64,10 @@ enum FuzzyMatcher {
                     consecutive = 0
                 }
 
-                // Start-of-word bonus
                 if nameIndex == 0 || nameChars[nameIndex - 1] == " " || nameChars[nameIndex - 1] == "-" {
                     total += 5
                 }
 
-                // Prefix bonus
                 if queryIndex == 0 && nameIndex == 0 {
                     total += 10
                 }
@@ -84,7 +78,6 @@ enum FuzzyMatcher {
             nameIndex += 1
         }
 
-        // All query characters must match
         guard queryIndex == queryChars.count else { return 0 }
 
         return total

@@ -1,6 +1,5 @@
 import Foundation
 
-/// Used only when dynamic discovery yields nothing.
 enum SystemSettingsFallback {
     static let items: [LaunchItem] = [
         item("Wi-Fi", "x-apple.systempreferences:com.apple.wifi-settings-extension"),

@@ -61,7 +61,6 @@ enum UpdateChecker {
         }.resume()
     }
 
-    /// Returns true if `remote` is newer than `local` using semantic versioning.
     static func isNewer(remote: String, local: String) -> Bool {
         let remoteParts = remote.split(separator: ".").compactMap { Int($0) }
         let localParts = local.split(separator: ".").compactMap { Int($0) }

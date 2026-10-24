@@ -49,7 +49,6 @@ enum AppDiscovery {
                 let name = displayName(for: resolved)
                 items.append(LaunchItem(name: name, url: resolved, kind: .application))
             } else if isDirectory(url) {
-                // Recurse into regular directories, but not .app bundles
                 scanDirectory(url, into: &items)
             }
         }

@@ -1,6 +1,5 @@
 import Foundation
 
-/// Pure parsing of Apple's `*.searchTerms` plists and pane Info.plist data.
 enum SettingsSearchTermsParser {
     static let urlPrefix = "x-apple.systempreferences:"
 
@@ -33,7 +32,6 @@ enum SettingsSearchTermsParser {
         return settings?["allowsXAppleSystemPreferencesURLScheme"] as? Bool != false
     }
 
-    /// `localize` maps a string key to its localized value, or nil when missing.
     static func paneName(info: [String: Any], localize: (String) -> String?, localizedInfo: [String: Any]?) -> String? {
         let attrs = (info["EXAppExtensionAttributes"] as? [String: Any])?["SettingsExtensionAttributes"] as? [String: Any]
         let reps = attrs?["representations"] as? [[String: Any]] ?? []
@@ -48,7 +46,6 @@ enum SettingsSearchTermsParser {
         return nil
     }
 
-    /// Turns code-style names ("HeadphoneSettingsExtension") into words ("Headphone").
     static func humanized(_ name: String) -> String {
         guard name.allSatisfy(\.isLetter) else { return name }
         var words = name.unicodeScalars.reduce(into: [String]()) { acc, scalar in
@@ -66,7 +63,6 @@ enum SettingsSearchTermsParser {
         return LaunchItem(name: "Settings: \(normalized(name))", url: url, kind: .systemSetting)
     }
 
-    /// Dedupe by name (case-insensitive), keeping the first item and merging keywords.
     static func deduped(_ items: [LaunchItem]) -> [LaunchItem] {
         var order: [String] = []
         var byName: [String: LaunchItem] = [:]

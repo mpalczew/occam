@@ -1,9 +1,6 @@
 import Foundation
 
 enum HomebrewDetector {
-    /// Returns true if the running app was installed via Homebrew Cask.
-    /// Checks both Apple Silicon and Intel Caskroom locations for a symlink
-    /// pointing to this app's bundle path.
     static var isHomebrewManaged: Bool {
         let bundlePath = Bundle.main.bundlePath
         let caskroomPaths = [

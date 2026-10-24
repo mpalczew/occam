@@ -25,7 +25,6 @@ fi
 DATE=$(date +%Y-%m-%d)
 HEADER="## [$VERSION] - $DATE"
 
-# Insert new version header after the changelog preamble
 sed -i '' "/^## \[/i\\
 \\
 $HEADER\\

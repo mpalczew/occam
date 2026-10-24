@@ -88,7 +88,6 @@ class SearchState: ObservableObject {
 
     private func updateFilteredResults() {
         if query.isEmpty {
-            // Sort by recency: recent apps first, then alphabetical for the rest
             let ranks = RecentApps.recencyRanks()
             filteredItems = allItems.sorted { a, b in
                 let rankA = ranks[a.url.absoluteString]

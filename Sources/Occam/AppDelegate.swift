@@ -22,7 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Handle --check-update early (no UI needed)
         if checkUpdateMode {
             runCheckUpdateAndExit()
             return
@@ -48,7 +47,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.centerOnScreen()
 
         if isScreenshotMode {
-            // Leave query empty to show all apps with icons
             panel.centerOnScreen()
             panel.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -69,8 +67,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showPanel()
         }
     }
-
-    // MARK: - Panel Management
 
     private func showPanel() {
         searchState.query = ""
@@ -113,8 +109,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Launch
-
     private func launch(_ item: LaunchItem) {
         switch item.kind {
         case .action(let action):
@@ -128,8 +122,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared.open(item.url)
         }
     }
-
-    // MARK: - Screenshot Capture
 
     private func captureAndExit(to path: String) {
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
@@ -151,8 +143,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             _exit(0)
         }
     }
-
-    // MARK: - Carbon Global Hotkey
 
     private func registerCarbonHotkey() {
         let hotkey = HotkeyConfig.current
@@ -181,7 +171,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         let hotkeyID = EventHotKeyID(
-            signature: OSType(0x4F43414D), // "OCAM"
+            signature: OSType(0x4F43414D),
             id: 1
         )
 
@@ -199,24 +189,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Local Key Monitor
-
     private func registerLocalMonitor() {
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self else { return event }
 
             guard let key = KeyCode(rawValue: event.keyCode) else { return event }
 
-            // Cmd+Q to quit
             if key == .q && event.modifierFlags.contains(.command) {
                 NSApp.terminate(nil)
                 return nil
             }
 
-            // All other shortcuts require the panel to be visible
             guard self.panel.isVisible else { return event }
 
-            // Cmd+1 through Cmd+9 to launch by position
             if event.modifierFlags.contains(.command), let digit = key.digit {
                 let index = digit - 1
                 if let item = self.searchState.filteredItems[safe: index] {
@@ -246,16 +231,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Click Outside to Dismiss
-
     private func registerClickOutsideMonitor() {
         clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self = self, self.panel.isVisible else { return }
             self.hidePanel()
         }
     }
-
-    // MARK: - Spotlight Conflict Resolution
 
     private static let spotlightDialogVersionKey = "occam_spotlight_dialog_version"
 
@@ -334,19 +315,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Check Update Mode
-
     private func runCheckUpdateAndExit() {
         autoUpdater.checkNow { message in
             print("Occam: \(message)")
             fflush(stdout)
             _exit(0)
         }
-        // Keep the run loop alive until the check completes
         RunLoop.current.run()
     }
-
-    // MARK: - Onboarding
 
     private static let onboardingOfferedKey = "occam_onboarding_offered"
 

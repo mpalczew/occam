@@ -2,24 +2,16 @@ import AppKit
 import Foundation
 
 class AutoUpdater {
-    // MARK: - UserDefaults Keys
 
     static let autoUpdateEnabledKey = "occam_auto_update_enabled"
     private static let lastUpdateCheckKey = "occam_last_update_check"
 
-    // MARK: - Configuration
-
     private static let checkInterval: TimeInterval = 24 * 60 * 60
-
-    // MARK: - State
 
     private var checkTimer: Timer?
     private var isUpdateInProgress = false
 
-    /// Set by AppDelegate to query panel visibility.
     var isPanelHidden: () -> Bool = { true }
-
-    // MARK: - Preferences
 
     static var isEnabled: Bool {
         get {
@@ -33,8 +25,6 @@ class AutoUpdater {
         }
     }
 
-    // MARK: - Public Interface
-
     func startMonitoring() {
         guard AutoUpdater.isEnabled else {
             NSLog("Occam: Auto-update disabled by user preference")
@@ -45,12 +35,10 @@ class AutoUpdater {
             NSLog("Occam: Homebrew installation detected")
         }
 
-        // Always check on launch (after short delay to avoid slowing startup)
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
             self?.performCheck()
         }
 
-        // Hourly timer to check if 24h have elapsed
         checkTimer = Timer.scheduledTimer(
             withTimeInterval: 60 * 60,
             repeats: true
@@ -64,7 +52,6 @@ class AutoUpdater {
         checkTimer = nil
     }
 
-    /// Run a single update check immediately. Used by --check-update CLI flag.
     func checkNow(completion: @escaping (String) -> Void) {
         let currentVersion = Bundle.main.object(
             forInfoDictionaryKey: "CFBundleShortVersionString"
@@ -83,8 +70,6 @@ class AutoUpdater {
             }
         }
     }
-
-    // MARK: - Check Logic
 
     private func checkIfDue() {
         guard AutoUpdater.isEnabled, !isUpdateInProgress else { return }

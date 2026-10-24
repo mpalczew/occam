@@ -1,7 +1,5 @@
 name: Release
 
-# Manual only (uses a macOS runner). Run on a pushed tag:
-#   gh workflow run release.yml --ref vX.Y.Z
 on:
   workflow_dispatch:
 
