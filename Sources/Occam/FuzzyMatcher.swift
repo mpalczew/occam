@@ -38,8 +38,13 @@ enum FuzzyMatcher {
     }
 
     static let minKeywordQueryLength = 3
-    static let exactKeywordScore = 12
-    static let prefixKeywordScore = 8
+    static let namePrefixScore = matchScore + wordStartBonus + firstCharBonus
+    static let exactKeywordScore = namePrefixScore - 4
+    static let prefixKeywordScore = exactKeywordScore - 4
+
+    private static let matchScore = 1
+    private static let wordStartBonus = 5
+    private static let firstCharBonus = 10
 
     static func score(name: String, query: String) -> Int {
         let nameChars = Array(name)
@@ -55,7 +60,7 @@ enum FuzzyMatcher {
 
         while queryIndex < queryChars.count && nameIndex < nameChars.count {
             if nameChars[nameIndex] == queryChars[queryIndex] {
-                total += 1
+                total += matchScore
 
                 if nameIndex == prevMatchIndex + 1 {
                     consecutive += 1
@@ -65,11 +70,11 @@ enum FuzzyMatcher {
                 }
 
                 if nameIndex == 0 || nameChars[nameIndex - 1] == " " || nameChars[nameIndex - 1] == "-" {
-                    total += 5
+                    total += wordStartBonus
                 }
 
                 if queryIndex == 0 && nameIndex == 0 {
-                    total += 10
+                    total += firstCharBonus
                 }
 
                 prevMatchIndex = nameIndex

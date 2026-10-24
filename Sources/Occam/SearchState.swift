@@ -86,19 +86,23 @@ class SearchState: ObservableObject {
         if selectedIndex < maxIndex { selectedIndex += 1 }
     }
 
+    static func sortedByRecency(_ items: [LaunchItem], ranks: [String: Int]) -> [LaunchItem] {
+        items.sorted { a, b in
+            let rankA = ranks[a.url.absoluteString]
+            let rankB = ranks[b.url.absoluteString]
+            switch (rankA, rankB) {
+            case let (ra?, rb?): return ra < rb
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            }
+        }
+    }
+
     private func updateFilteredResults() {
         if query.isEmpty {
             let ranks = RecentApps.recencyRanks()
-            filteredItems = allItems.sorted { a, b in
-                let rankA = ranks[a.url.absoluteString]
-                let rankB = ranks[b.url.absoluteString]
-                switch (rankA, rankB) {
-                case let (ra?, rb?): return ra < rb
-                case (_?, nil): return true
-                case (nil, _?): return false
-                default: return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
-                }
-            }
+            filteredItems = Self.sortedByRecency(allItems, ranks: ranks)
         } else {
             let ranks = RecentApps.recencyRanks()
             filteredItems = FuzzyMatcher.filter(items: allItems, query: query, recencyRanks: ranks)

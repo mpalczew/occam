@@ -7,6 +7,8 @@ class AutoUpdater {
     private static let lastUpdateCheckKey = "occam_last_update_check"
 
     private static let checkInterval: TimeInterval = 24 * 60 * 60
+    private static let initialCheckDelay: TimeInterval = 10
+    private static let timerPollInterval: TimeInterval = 60 * 60
 
     private var checkTimer: Timer?
     private var isUpdateInProgress = false
@@ -35,12 +37,12 @@ class AutoUpdater {
             NSLog("Occam: Homebrew installation detected")
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.initialCheckDelay) { [weak self] in
             self?.performCheck()
         }
 
         checkTimer = Timer.scheduledTimer(
-            withTimeInterval: 60 * 60,
+            withTimeInterval: Self.timerPollInterval,
             repeats: true
         ) { [weak self] _ in
             self?.checkIfDue()
