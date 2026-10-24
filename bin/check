@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# bin/check --staged    pre-commit: judge only the index (build runs in a snapshot of it)
 # bin/check [gate|all]  gates: build harness (harness always runs): silent on pass, prints only failing step output.
 set -u
 cd "$(dirname "$0")/.."
@@ -24,10 +25,31 @@ gate_harness() {
   if [ -n "$bad" ]; then printf '%s\n' "$bad"; exit 1; fi
   echo "✓ harness: .claude holds only the skills link"
 }
-run_gate() { case $1 in harness) gate_harness;; build) run_step build step_build_swift "swift build";; esac; }
+snap=
+build_snapshot() {
+  root=$PWD
+  snap=$(mktemp -d)
+  trap 'rm -rf "$snap"' EXIT
+  git checkout-index -a --prefix="$snap/"
+  [ -d "$root/.build" ] && ln -s "$root/.build" "$snap/.build"
+  return 0
+}
+step_build_staged() { ( cd "$snap" && unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_PREFIX && swift build ); }
+run_gate() {
+  case $1 in
+    harness) gate_harness;;
+    build) if [ "$sel" = --staged ]; then build_snapshot; run_step build step_build_staged "swift build"; else run_step build step_build_swift "swift build"; fi;;
+  esac
+}
 
 sel=${1:-}
 if [ "$sel" = all ]; then todo=$GATES
+elif [ "$sel" = --staged ]; then
+  changed=$(git diff --cached --name-only --diff-filter=ACMRD)
+  todo=harness
+  for p in $(gate_paths build); do
+    if printf '%s\n' "$changed" | rg -q "^${p}(/|$)"; then todo="$todo build"; break; fi
+  done
 elif [ -n "$sel" ]; then
   case " $GATES " in *" $sel "*) todo=$sel;; *) echo "unknown gate: $sel (gates: $GATES)" >&2; exit 2;; esac
 else
