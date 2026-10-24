@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# bin/check [gate|all]: silent on pass, prints only failing step output.
+# bin/check [gate|all]  gates: build harness (harness always runs): silent on pass, prints only failing step output.
 set -u
 cd "$(dirname "$0")/.."
-GATES="build"
+git config core.hooksPath >/dev/null 2>&1 || git config core.hooksPath .githooks
+GATES="build harness"
 
 gate_paths() { case $1 in build) echo "Sources Package.swift Package.resolved Resources";; esac; }
 step_build_swift() { swift build; }
@@ -11,7 +12,19 @@ run_step() {
   local out
   if out=$("$2" 2>&1); then echo "✓ $1: $3"; else echo "✗ $1: $3" >&2; printf '%s\n' "$out" | awk 'length < 500' >&2; exit 1; fi
 }
-run_gate() { case $1 in build) run_step build step_build_swift "swift build";; esac; }
+harness_bad() {
+  git ls-files .claude | rg -v '^\.claude/skills$' || true
+  if [ -e .claude/skills ] || [ -L .claude/skills ]; then
+    [ -L .claude/skills ] && [ "$(readlink .claude/skills)" = ../.agents/skills ] || echo .claude/skills
+  fi
+}
+gate_harness() {
+  local bad
+  bad=$(harness_bad)
+  if [ -n "$bad" ]; then printf '%s\n' "$bad"; exit 1; fi
+  echo "✓ harness: .claude holds only the skills link"
+}
+run_gate() { case $1 in harness) gate_harness;; build) run_step build step_build_swift "swift build";; esac; }
 
 sel=${1:-}
 if [ "$sel" = all ]; then todo=$GATES
@@ -20,8 +33,9 @@ elif [ -n "$sel" ]; then
 else
   base=$(git merge-base HEAD main 2>/dev/null || echo HEAD)
   changed=$( { git diff --name-only "$base"; git ls-files --others --exclude-standard; } 2>/dev/null | sort -u)
-  todo=
+  todo=harness
   for g in $GATES; do
+    [ "$g" = harness ] && continue
     for p in $(gate_paths "$g"); do
       if printf '%s\n' "$changed" | rg -q "^${p}(/|$)"; then todo="$todo $g"; break; fi
     done
